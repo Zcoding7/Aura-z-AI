@@ -1,0 +1,5 @@
+streamlit
+audio-recorder-streamlit
+SpeechRecognition
+gTTS
+google-genai
