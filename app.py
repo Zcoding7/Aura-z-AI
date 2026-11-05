@@ -41,7 +41,7 @@ def ask_ai(prompt, context_type="general"):
             system_instruction = "Answer this spoken question in one or two short, conversational sentences suitable for text-to-speech reading."
             
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.8-flash",
             contents=f"{system_instruction} Input: {prompt}"
         )
         return response.text.strip()
