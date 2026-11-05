@@ -3,12 +3,15 @@ from audio_recorder_streamlit import audio_recorder
 import speech_recognition as sr
 from gtts import gTTS
 import base64
-import random
 from datetime import datetime
 import io
 from google import genai
 
-client = genai.Client()
+api_key = st.secrets.get("GEMINI_API_KEY")
+if api_key:
+    client = genai.Client(api_key=api_key)
+else:
+    client = genai.Client()
 
 st.set_page_config(page_title="Voice Assistant", page_icon="🎙️")
 st.title("🎙️ Expandable Voice Assistant")
@@ -28,15 +31,22 @@ def speak_web(text):
     md = f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">'
     st.markdown(md, unsafe_allow_html=True)
 
-def ask_ai(question):
+def ask_ai(prompt, context_type="general"):
+    if not api_key:
+        return "API key configuration is missing in settings."
     try:
+        if context_type == "fact":
+            system_instruction = "Tell a random, mind-blowing, verified educational fact. Keep it to one or two short sentences."
+        else:
+            system_instruction = "Answer this spoken question in one or two short, conversational sentences suitable for text-to-speech reading."
+            
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=f"Answer this spoken question in one or two short, conversational sentences suitable for text-to-speech reading: {question}"
+            contents=f"{system_instruction} Input: {prompt}"
         )
         return response.text.strip()
-    except Exception:
-        return "I am having trouble connecting to my brain right now."
+    except Exception as e:
+        return f"Brain connection error: {str(e)}"
 
 def handle_command(command):
     if "my name is" in command:
@@ -54,14 +64,8 @@ def handle_command(command):
         now = datetime.now().strftime("%I:%M %p")
         speak_web(f"The time is {now}")
     elif "fact" in command:
-        facts = [
-            "Octopuses have three hearts.",
-            "Honey can last for thousands of years.",
-            "Bananas are berries.",
-            "The Eiffel Tower can become taller in hot weather.",
-            "A group of flamingos is called a flamboyance."
-        ]
-        speak_web(random.choice(facts))
+        ai_fact = ask_ai("Give me a random fact", context_type="fact")
+        speak_web(ai_fact)
     elif "joke" in command:
         speak_web("Why did the computer go to the doctor? Because it had a virus!")
     else:
